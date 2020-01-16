@@ -1,8 +1,5 @@
 # GrpcOpencensusInterceptor
-
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/grpc_opencensus_interceptor`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+An interceptor for using [OpenCensus](https://opencensus.io/) with gRPC.
 
 ## Installation
 
@@ -22,7 +19,20 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+Please set a `GrpcOpencensusInterceptor` as an interceptor of your gRPC application.
+
+```ruby
+require 'grpc'
+require 'grpc_opencensus_interceptor'
+
+server = GRPC::RpcServer.new(
+  interceptors: [
+    GrpcOpencensusInterceptor.new,
+  ]
+)
+server.handle(MyHandler.new)
+server.run_till_terminated_or_interrupted(['SIGINT'])
+```
 
 ## Development
 
