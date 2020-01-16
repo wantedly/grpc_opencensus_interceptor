@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    grpc_opencensus_interceptor (0.1.0)
+    grpc_opencensus_interceptor (0.0.1)
       grpc
       opencensus
 
