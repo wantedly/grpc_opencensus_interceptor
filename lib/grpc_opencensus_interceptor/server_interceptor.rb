@@ -15,6 +15,7 @@ module GrpcOpencensusInterceptor
     def initialize(exporter: nil, span_modifier: nil)
       @exporter      = exporter || OpenCensus::Trace.config.exporter
       @span_modifier = span_modifier
+      @deserializer  = OpenCensus::Trace::Formatters::Binary.new
     end
 
     ##
@@ -63,7 +64,7 @@ module GrpcOpencensusInterceptor
     # @param [String] context_bin OpenCensus span context in binary format
     # @return [OpenCensus::Trace::TraceContextData, nil]
     def deserialize(context_bin)
-      OpenCensus::Trace::Formatters::Binary.new.deserialize(context_bin)
+      @deserializer.deserialize(context_bin)
     end
 
     # Span name is represented as $package.$service/$method
