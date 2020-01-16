@@ -1,17 +1,6 @@
 require "google/protobuf/empty_pb"
 require "google/protobuf/wrappers_pb"
-
-class MockedExporter
-  def initialize
-    @spans = []
-  end
-
-  def export(spans)
-    @spans += spans
-  end
-
-  attr_reader :spans
-end
+require "support/mocked_exporter"
 
 RSpec.describe GrpcOpencensusInterceptor do
   describe "#request_response" do
@@ -22,7 +11,7 @@ RSpec.describe GrpcOpencensusInterceptor do
       )
     }
     let(:mocked_exporter) {
-      MockedExporter.new
+      Support::MockedExporter.new
     }
     let(:request) { Google::Protobuf::StringValue.new(value: "World") }
     let(:call) { double(:call, peer: "ipv4:127.0.0.1:63634", metadata: metadata) }
