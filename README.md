@@ -19,6 +19,7 @@ Or install it yourself as:
 
 ## Usage
 
+### Server
 Please set a `GrpcOpencensusInterceptor` as an interceptor of your gRPC application.
 
 ```ruby
@@ -27,11 +28,23 @@ require 'grpc_opencensus_interceptor'
 
 server = GRPC::RpcServer.new(
   interceptors: [
-    GrpcOpencensusInterceptor.new,
+    GrpcOpencensusInterceptor::ServerInterceptor.new,
   ]
 )
 server.handle(MyHandler.new)
 server.run_till_terminated_or_interrupted(['SIGINT'])
+```
+
+### Client
+
+```ruby
+require 'grpc'
+require 'grpc_opencensus_interceptor'
+url = "dns:test-service:80"
+stub = TestService::Stub.new(url, :this_channel_is_insecure, interceptors: [
+  GrpcOpencensusInterceptor::ClientInterceptor.new,
+])
+stub.hello_rpc
 ```
 
 ## Development
