@@ -1,10 +1,7 @@
-require "opencensus"
-require "grpc"
 require "grpc_opencensus_interceptor/server_interceptor/span_modifier"
 
 module GrpcOpencensusInterceptor
   class ServerInterceptor < GRPC::ServerInterceptor
-    OPENCENSUS_TRACE_BIN_KEY = "grpc-trace-bin".freeze
 
     # @param [#export] exporter The exported used to export captured spans
     #     at the end of the request. Optional: If omitted, uses the exporter
@@ -26,11 +23,11 @@ module GrpcOpencensusInterceptor
     # @param [Method] method
     #
     def request_response(request:, call:, method:)
-      context_bin = call.metadata[OPENCENSUS_TRACE_BIN_KEY]
+      context_bin = call.metadata[Util::OPENCENSUS_TRACE_BIN_KEY]
       if context_bin
         context = deserialize(context_bin)
       else
-        cojntext = nil
+        context = nil
       end
 
       OpenCensus::Trace.start_request_trace(
@@ -45,7 +42,7 @@ module GrpcOpencensusInterceptor
               grpc_ex = GRPC::Ok.new
               yield
             rescue StandardError => e
-              grpc_ex = to_grpc_ex(e)
+              grpc_ex = Util.to_grpc_ex(e)
               raise e
             ensure
               finish_request(span, grpc_ex)
@@ -67,6 +64,7 @@ module GrpcOpencensusInterceptor
       @deserializer.deserialize(context_bin)
     end
 
+    ##
     # Span name is represented as $package.$service/$method
     # cf. https://github.com/census-instrumentation/opencensus-specs/blob/master/trace/gRPC.md#spans
     #
@@ -88,6 +86,7 @@ module GrpcOpencensusInterceptor
       term.split("_").map(&:capitalize).join
     end
 
+    ##
     # Modify span by custom span modifier
     #
     # @param [OpenCensus::Trace::SpanBuilder] span
@@ -116,56 +115,7 @@ module GrpcOpencensusInterceptor
       # Set gRPC server status
       # https://github.com/census-instrumentation/opencensus-specs/blob/master/trace/gRPC.md#spans
       span.set_status exception.code
-      span.put_attribute "http.status_code", to_http_status(exception)
-    end
-
-    # cf. https://github.com/grpc/grpc/blob/master/doc/http-grpc-status-mapping.md
-    # cf. https://github.com/census-instrumentation/opencensus-specs/blob/master/trace/HTTP.md#mapping-from-http-status-codes-to-trace-status-codes
-    #
-    # @param [GRPC::BadStatus] exception
-    # @return [Integer]
-    def to_http_status(exception)
-      case exception
-      when GRPC::Ok
-        200
-      when GRPC::InvalidArgument
-        400
-      when GRPC::DeadlineExceeded
-        504
-      when GRPC::NotFound
-        404
-      when GRPC::PermissionDenied
-        403
-      when GRPC::Unauthenticated
-        401
-      when GRPC::Aborted
-        # For GRPC::Aborted, grpc-gateway uses 409. We do the same.
-        # cf. https://github.com/grpc-ecosystem/grpc-gateway/blob/e8db07a3923d3f5c77dbcea96656afe43a2757a8/runtime/errors.go#L17-L58
-        409
-      when GRPC::ResourceExhausted
-        429
-      when GRPC::Unimplemented
-        501
-      when GRPC::Unavailable
-        503
-      when GRPC::Unknown
-        # NOTE: This is not same with the correct mapping
-        500
-      else
-        # NOTE: Here, we use 500 temporarily.
-        500
-      end
-    end
-
-    # @param [Exception] e
-    # @return [GRPC::BadStatus] e
-    def to_grpc_ex(e)
-      case e
-      when GRPC::BadStatus
-        e
-      else
-        GRPC::Unknown.new(e.message)
-      end
+      span.put_attribute "http.status_code", Util.to_http_status(exception)
     end
   end
 end
