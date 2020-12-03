@@ -71,7 +71,7 @@ module GrpcOpencensusInterceptor
     # @param [Method] method
     # @return [String]
     def get_name(method)
-      "#{method.owner.service_name}/#{camelize(method.name.to_s)}"
+      "#{method.receiver.class.service_name}/#{camelize(method.name.to_s)}"
     end
 
     # @param [Method] method
